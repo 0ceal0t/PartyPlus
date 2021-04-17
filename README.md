@@ -1,0 +1,14 @@
+## TODO
+- horizontal
+	- party lead?
+	- statuses (DONE)?
+	- offline / crossworld?
+- hide lvl
+- hide #
+- small mp bar
+- large health bar
+- vertical health?
+- buff filtering
+- show cards, etc.
+- hide pet
+- hide chocobo

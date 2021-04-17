@@ -1,0 +1,80 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup Label="Target">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <TargetFramework>net472</TargetFramework>
+        <LangVersion>preview</LangVersion>
+        <Platforms>AnyCPU;x64</Platforms>
+        <Configurations>Debug;Release</Configurations>
+    </PropertyGroup>
+    <PropertyGroup Label="Build">
+        <OutputType>Library</OutputType>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+    </PropertyGroup>
+    <PropertyGroup Label="Feature">
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Version>1.4.0.1</Version>
+    </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)'=='Release'">
+        <AppOutputBase>$(MSBuildProjectDirectory)\</AppOutputBase>
+        <Deterministic>true</Deterministic>
+    </PropertyGroup>
+	<PropertyGroup>
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+        <AssemblyName>PartyPlusNoDeps</AssemblyName>
+    </PropertyGroup>
+    <ItemGroup>
+      <Compile Remove="lib\**" />
+      <Compile Remove="Publish\**" />
+      <EmbeddedResource Remove="lib\**" />
+      <EmbeddedResource Remove="Publish\**" />
+      <None Remove="lib\**" />
+      <None Remove="Publish\**" />
+      <Compile Remove="FFXIVClientInterface\**" />
+      <EmbeddedResource Remove="FFXIVClientInterface\**" />
+      <None Remove="FFXIVClientInterface\**" />
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="ILMerge" Version="3.0.41" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="FFXIVClientInterface\FFXIVClientInterface.csproj" />
+      <ProjectReference Include="lib\FFXIVClientStructs\FFXIVClientStructs.csproj" Private="true" />
+    </ItemGroup>
+	<Target Name="ILMerge" AfterTargets="PostBuildEvent">
+		<!-- Merge and rename -->
+		<Exec Command="$(ILMergeConsolePath) /target:library /out:$(TargetDir)/../PartyPlus.dll /log /lib:$(APPDATA)\XIVLauncher\addon\Hooks\dev $(TargetDir)PartyPlusNoDeps.dll $(TargetDir)FFXIVClientStructs.dll $(TargetDir)FFXIVClientInterface.dll&#xD;&#xA;powershell -Command &quot;Remove-Item '$(TargetDir)\*.*';Move-Item '$(TargetDir)\..\PartyPlus.*' -Destination '$(TargetDir)';&quot;" />
+	</Target>
+	<ItemGroup>
+		<Reference Include="Dalamud">
+            <Private>false</Private>
+            <HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\Dalamud.dll</HintPath>
+		</Reference>
+		<Reference Include="Microsoft.CSharp" />
+        <Reference Include="Newtonsoft.Json">
+            <Private>false</Private>
+            <HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\Newtonsoft.Json.dll</HintPath>
+		</Reference>
+		<Reference Include="ImGui.NET">
+            <Private>false</Private>
+            <HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\ImGui.NET.dll</HintPath>
+		</Reference>
+		<Reference Include="ImGuiScene">
+            <Private>false</Private>
+            <HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\ImGuiScene.dll</HintPath>
+		</Reference>
+		<Reference Include="Lumina">
+            <Private>false</Private>
+            <HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\Lumina.dll</HintPath>
+		</Reference>
+		<Reference Include="Lumina.Excel">
+            <Private>false</Private>
+            <HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\Lumina.Excel.dll</HintPath>
+		</Reference>
+    </ItemGroup>
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)'=='Release'">
+		<Exec Command="powershell -Command &quot;New-Item -ItemType Directory -Force -Path '$(ProjectDir)Publish'; $a=Get-Item '$(TargetDir)PartyPlus.dll'; $jsonTemplate=Get-Content '$(ProjectDir)\$(ProjectName).template.json' | ConvertFrom-Json; $jsonTemplate.AssemblyVersion=$a.VersionInfo.FileVersion; $jsonTemplate.Description = $jsonTemplate.Description -join '\n'; ($jsonTemplate | ConvertTo-Json).Replace('\\n','\n') | Out-File '$(ProjectDir)\Publish\$(ProjectName).json' -Encoding utf8;Compress-Archive -Path '$(ProjectDir)\Publish\$(ProjectName).json','$(TargetDir)\*' -DestinationPath '$(ProjectDir)Publish\latest.zip' -Force&quot;" />
+	</Target>
+</Project>
